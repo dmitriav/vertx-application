@@ -3,7 +3,7 @@
 
   <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
     <encoder>
-      <pattern>%d [%thread] %-5level %logger [%file:%line] - %msg%n</pattern>
+      <pattern>%d [%thread] %-5level %logger{1} [%file:%line] - %msg%n</pattern>
     </encoder>
   </appender>
 
@@ -11,7 +11,8 @@
     <appender-ref ref="STDOUT" />
   </root>
 
-  <logger name="com.dmitriav" level="WARN" />
+  <logger name="io.netty" level="WARN" />
+  <logger name="com.dmitriav" level="DEBUG" />
   <logger name="com.dmitriav.vertx.Application" level="ALL" />
 
 </configuration>
