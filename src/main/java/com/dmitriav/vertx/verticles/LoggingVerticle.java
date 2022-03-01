@@ -13,11 +13,11 @@ public class LoggingVerticle extends AbstractVerticle {
 
   @Override
   public void start() {
-    vertx.eventBus().consumer("web.events", this::messageHandler);
+    vertx.eventBus().consumer("web.payments", this::messageHandler);
   }
 
   private void messageHandler(Message<JsonObject> message) {
-    JsonObject event = message.body();
-    logger.info("{}", event);
+    JsonObject payment = message.body();
+    logger.info("{}", payment);
   }
 }

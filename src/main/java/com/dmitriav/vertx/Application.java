@@ -23,9 +23,15 @@ public class Application {
         .setWorker(false);
 
     Vertx vertx = Vertx.vertx();
-    vertx.deployVerticle(WebVerticle.class.getCanonicalName(), webOptions);
-    vertx.deployVerticle(LoggingVerticle.class.getCanonicalName());
+    vertx.deployVerticle(WebVerticle.class.getCanonicalName(), webOptions)
+        .onFailure(Application::deploymentErrorHandler);
+    vertx.deployVerticle(LoggingVerticle.class.getCanonicalName())
+        .onFailure(Application::deploymentErrorHandler);
 
     logger.info("Application started");
+  }
+
+  private static void deploymentErrorHandler(Throwable error) {
+    logger.error("Deployment error", error);
   }
 }

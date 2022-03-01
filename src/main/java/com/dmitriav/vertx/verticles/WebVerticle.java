@@ -2,9 +2,10 @@ package com.dmitriav.vertx.verticles;
 
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Promise;
-import io.vertx.core.http.HttpMethod;
-import io.vertx.core.http.HttpServerRequest;
 import io.vertx.core.json.JsonObject;
+import io.vertx.ext.web.Router;
+import io.vertx.ext.web.RoutingContext;
+import io.vertx.ext.web.handler.BodyHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -15,10 +16,11 @@ public class WebVerticle extends AbstractVerticle {
 
   @Override
   public void start(Promise<Void> promise) {
+    Router router = setupRouter();
     int port = config().getInteger("http.port", 8080);
 
     vertx.createHttpServer()
-        .requestHandler(this::requestHandler)
+        .requestHandler(router)
         .listen(port)
         .onSuccess(server -> {
           int actualPort = server.actualPort();
@@ -28,19 +30,65 @@ public class WebVerticle extends AbstractVerticle {
         .onFailure(promise::fail);
   }
 
-  private void requestHandler(HttpServerRequest request) {
-    // TODO: use Router instead
+  private Router setupRouter() {
+    Router rootRouter = Router.router(vertx);
+    Router paymentRouter = Router.router(vertx);
+    BodyHandler bodyHandler = BodyHandler.create();
 
-    String path = request.path();
-    HttpMethod method = request.method();
-    String methodName = method.name();
+    paymentRouter.post()
+        .handler(bodyHandler);
+    paymentRouter.put()
+        .handler(bodyHandler);
 
-    JsonObject event = new JsonObject()
-        .put("path", path)
-        .put("method", methodName);
+    paymentRouter.post("/")
+        .handler(this::makePaymentHandler)
+        .handler(this::endHandler);
+    paymentRouter.put("/:paymentId")
+        .handler(this::updatePaymentHandler)
+        .handler(this::endHandler);
+    paymentRouter.delete("/:paymentId")
+        .handler(this::cancelPaymentHandler)
+        .handler(this::endHandler);
+    paymentRouter.get("/")
+        .handler(this::getPaymentsHandler)
+        .handler(this::endHandler);
 
-    vertx.eventBus().publish("web.events", event);
+    rootRouter.mountSubRouter("/v1/payments", paymentRouter);
 
-    request.response().end();
+    return rootRouter;
+  }
+
+  private void makePaymentHandler(RoutingContext context) {
+    logger.debug("Making payment");
+    JsonObject payment = context.getBodyAsJson();
+    publishPayment(payment);
+    context.next();
+  }
+
+  private void updatePaymentHandler(RoutingContext context) {
+    String paymentId = context.pathParam("paymentId");
+    logger.debug("Updating payment, ID: {}", paymentId);
+    context.next();
+  }
+
+  private void cancelPaymentHandler(RoutingContext context) {
+    String paymentId = context.pathParam("paymentId");
+    logger.debug("Cancelling payment, ID: {}", paymentId);
+    context.next();
+  }
+
+  private void getPaymentsHandler(RoutingContext context) {
+    logger.debug("Getting payments");
+    context.next();
+  }
+
+  private void endHandler(RoutingContext context) {
+    JsonObject response = new JsonObject()
+        .put("status", "OK");
+    context.json(response);
+  }
+
+  private void publishPayment(JsonObject payment) {
+    vertx.eventBus().publish("web.payments", payment);
   }
 }
