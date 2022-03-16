@@ -41,48 +41,48 @@ public class WebVerticle extends AbstractVerticle {
         .handler(bodyHandler);
 
     paymentRouter.post("/")
-        .handler(this::makePaymentHandler)
-        .handler(this::endHandler);
+        .handler(this::makePayment)
+        .handler(this::endRequest);
     paymentRouter.put("/:paymentId")
-        .handler(this::updatePaymentHandler)
-        .handler(this::endHandler);
+        .handler(this::updatePayment)
+        .handler(this::endRequest);
     paymentRouter.delete("/:paymentId")
-        .handler(this::cancelPaymentHandler)
-        .handler(this::endHandler);
+        .handler(this::cancelPayment)
+        .handler(this::endRequest);
     paymentRouter.get("/")
-        .handler(this::getPaymentsHandler)
-        .handler(this::endHandler);
+        .handler(this::getPayments)
+        .handler(this::endRequest);
 
     rootRouter.mountSubRouter("/v1/payments", paymentRouter);
 
     return rootRouter;
   }
 
-  private void makePaymentHandler(RoutingContext context) {
+  private void makePayment(RoutingContext context) {
     logger.debug("Making payment");
     JsonObject payment = context.getBodyAsJson();
     publishPayment(payment);
     context.next();
   }
 
-  private void updatePaymentHandler(RoutingContext context) {
+  private void updatePayment(RoutingContext context) {
     String paymentId = context.pathParam("paymentId");
     logger.debug("Updating payment, ID: {}", paymentId);
     context.next();
   }
 
-  private void cancelPaymentHandler(RoutingContext context) {
+  private void cancelPayment(RoutingContext context) {
     String paymentId = context.pathParam("paymentId");
     logger.debug("Cancelling payment, ID: {}", paymentId);
     context.next();
   }
 
-  private void getPaymentsHandler(RoutingContext context) {
+  private void getPayments(RoutingContext context) {
     logger.debug("Getting payments");
     context.next();
   }
 
-  private void endHandler(RoutingContext context) {
+  private void endRequest(RoutingContext context) {
     JsonObject response = new JsonObject()
         .put("status", "OK");
     context.json(response);
